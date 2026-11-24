@@ -1,0 +1,28 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Stratox Premium Dark Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #27272a; 
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46; 
+}
+
+/* Base selection color for text highlighting */
+::selection {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}

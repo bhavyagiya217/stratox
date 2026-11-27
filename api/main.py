@@ -76,7 +76,7 @@ async def analyze_infra(request: CloudRequest):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-4-hydrogen",
             contents=request.prompt,
             config=config
         )
@@ -92,7 +92,7 @@ async def analyze_infra(request: CloudRequest):
         print(f"Primary node congested ({e}). Activating Failover.")
         try:
             fallback_response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-3.5-flash-lite",
                 contents=request.prompt,
                 config=config
             )

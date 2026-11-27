@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { 
   Terminal, Code2, Layers, 
@@ -30,9 +30,17 @@ export default function StratoxCommandCenter() {
           body: JSON.stringify({ prompt, analysis_mode: analysisMode }),
         });
         const data = await res.json();
-        setResult(data);
-        setTotalMonitoredSpend(prev => prev + (data.initial_cost || 0));
-        setTotalSavings(prev => prev + (data.savings || 0));
+        const parsedInitial = Number(data.initial_cost ?? 0);
+        const parsedSavings = Number(data.total_savings ?? data.savings ?? 0);
+        setResult({
+          ...data,
+          initial_cost: parsedInitial,
+          optimized_cost: Number(data.optimized_cost ?? 0),
+          total_savings: parsedSavings,
+          savings: parsedSavings,
+        });
+        setTotalMonitoredSpend(prev => prev + parsedInitial);
+        setTotalSavings(prev => prev + parsedSavings);
     } catch (err) {
         console.error(err);
     }
@@ -57,7 +65,8 @@ export default function StratoxCommandCenter() {
   const handleDownload = () => {
     if (!result) return;
     const dateStr = new Date().toISOString().split('T')[0];
-    const reportContent = `# Stratox FinOps Intelligence Report\n\n**Analysis Mode:** ${analysisMode.toUpperCase()}\n**Timestamp:** ${new Date().toLocaleString()}\n**Routing Node:** ${result.pillar_addressed}\n\n### FinOps Telemetry\n- **Initial Projected Cost:** $${result.initial_cost.toFixed(2)}/mo\n- **Optimized Cost:** $${result.optimized_cost.toFixed(2)}/mo\n- **Total Savings Realized:** $${result.savings.toFixed(2)}/mo\n\n---\n\n## Architecture & Remediation Details\n\n${result.analysis_output}`;
+    const runSavings = Number(result.total_savings ?? result.savings ?? 0);
+    const reportContent = `# Stratox FinOps Intelligence Report\n\n**Analysis Mode:** ${analysisMode.toUpperCase()}\n**Timestamp:** ${new Date().toLocaleString()}\n**Routing Node:** ${result.pillar_addressed}\n\n### FinOps Telemetry\n- **Initial Projected Cost:** $${Number(result.initial_cost ?? 0).toFixed(2)}/mo\n- **Optimized Cost:** $${Number(result.optimized_cost ?? 0).toFixed(2)}/mo\n- **Total Savings Realized:** $${runSavings.toFixed(2)}/mo\n\n---\n\n## Architecture & Remediation Details\n\n${result.analysis_output}`;
     const blob = new Blob([reportContent], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -68,6 +77,8 @@ export default function StratoxCommandCenter() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  const resultSavings = Number(result?.total_savings ?? result?.savings ?? 0);
 
   return (
     <div className="min-h-screen bg-[#0e0e11] text-[#a1a1aa] font-sans selection:bg-amber-500/20">
@@ -121,7 +132,7 @@ export default function StratoxCommandCenter() {
               <p className="text-[11px] text-[#71717a] uppercase tracking-widest font-semibold mb-1.5">Routing Node</p>
               <p className="text-[14px] font-medium text-[#ededed] flex items-center gap-2">
                 <Activity className="w-3.5 h-3.5 text-amber-500"/>
-                {result ? (result.status.includes("Failover") ? "HA Pool (1.5)" : "Premium (2.0)") : "Standby"}
+                {result ? (result.status?.includes("Failover") ? "HA Pool (3.5)" : "Gemini 4") : "Standby"}
               </p>
             </div>
           </div>
@@ -179,17 +190,17 @@ export default function StratoxCommandCenter() {
               <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
                 <div className="flex items-center bg-[#0e0e11] border border-[#27272a] rounded-lg p-1 mr-2">
                   <span className="text-[12px] font-mono text-[#71717a] px-2" title="Initial Projected Cost">
-                    Before: ${result.initial_cost.toFixed(2)}
+                    Before: ${Number(result.initial_cost ?? 0).toFixed(2)}
                   </span>
-                  {result.savings > 0 && (
+                  {resultSavings > 0 && (
                     <>
                       <ArrowRight className="w-3 h-3 text-[#52525b]" />
                       <span className="text-[12px] font-mono text-emerald-400 px-2" title="Cost after Stratox Optimization">
-                        After: ${result.optimized_cost.toFixed(2)}
+                        After: ${Number(result.optimized_cost ?? 0).toFixed(2)}
                       </span>
                       <div className="w-px h-4 bg-[#27272a] mx-1"></div>
                       <span className="text-[12px] font-mono font-medium text-[#0e0e11] bg-amber-500 px-2 py-0.5 rounded-md">
-                        Saved: ${result.savings.toFixed(2)}
+                        Saved: ${resultSavings.toFixed(2)}
                       </span>
                     </>
                   )}

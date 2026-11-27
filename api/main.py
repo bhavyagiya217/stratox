@@ -91,47 +91,42 @@ async def analyze_infra(request: CloudRequest):
         response_schema=FinOpsAnalysis,
     )
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-4-hydrogen",
-            contents=request.prompt,
-            config=config,
-        )
-        parsed = parse_gemini_result(response)
-        return {
-            "pillar_addressed": agent_name,
-            "analysis_output": parsed.analysis_output,
-            "initial_cost": parsed.initial_cost,
-            "optimized_cost": parsed.optimized_cost,
-            "savings": parsed.total_savings,
-            "total_savings": parsed.total_savings,
-            "status": "Success",
-        }
-    except Exception as e:
-        print(f"Primary node congested ({e}). Activating Failover.")
+    # Multi-tier try-except fallback chain for 503 UNAVAILABLE / high demand resilience
+    model_chain = [
+        ("gemini-4-hydrogen", False),
+        ("gemini-4-argon", True),
+        ("gemini-3.5-flash-lite", True),
+        ("gemini-3.1-flash-lite", True),
+    ]
+
+    last_error = None
+    for model_name, is_failover in model_chain:
         try:
-            fallback_response = client.models.generate_content(
-                model="gemini-3.5-flash-lite",
+            response = client.models.generate_content(
+                model=model_name,
                 contents=request.prompt,
                 config=config,
             )
-            parsed = parse_gemini_result(fallback_response)
+            parsed = parse_gemini_result(response)
             return {
-                "pillar_addressed": f"{agent_name} (Failover Node)",
+                "pillar_addressed": f"{agent_name} (Failover Node)" if is_failover else agent_name,
                 "analysis_output": parsed.analysis_output,
                 "initial_cost": parsed.initial_cost,
                 "optimized_cost": parsed.optimized_cost,
                 "savings": parsed.total_savings,
                 "total_savings": parsed.total_savings,
-                "status": "Success (Failover)",
+                "status": "Success (Failover)" if is_failover else "Success",
             }
-        except Exception as fallback_e:
-            return {
-                "pillar_addressed": "System Offline",
-                "analysis_output": str(fallback_e),
-                "initial_cost": 0.0,
-                "optimized_cost": 0.0,
-                "savings": 0.0,
-                "total_savings": 0.0,
-                "status": "Failed",
-            }
+        except Exception as e:
+            print(f"Model {model_name} failed/congested ({e}). Retrying next fallback model.")
+            last_error = e
+
+    return {
+        "pillar_addressed": "System Offline",
+        "analysis_output": str(last_error),
+        "initial_cost": 0.0,
+        "optimized_cost": 0.0,
+        "savings": 0.0,
+        "total_savings": 0.0,
+        "status": "Failed",
+    }

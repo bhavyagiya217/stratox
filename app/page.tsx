@@ -7,7 +7,7 @@ import {
   Building, CreditCard, Download, Copy, Check
 } from "lucide-react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const BACKEND_URL = "https://stratox.onrender.com";
 
 export default function StratoxCommandCenter() {
   const [prompt, setPrompt] = useState("");
@@ -24,7 +24,7 @@ export default function StratoxCommandCenter() {
     setLoading(true);
     setResult(null); 
     try {
-        const res = await fetch(`${API_BASE_URL}/analyze-infrastructure`, {
+        const res = await fetch(`${BACKEND_URL}/analyze-infrastructure`, {
           method: "POST", 
           headers: { "Content-Type": "application/json" }, 
           body: JSON.stringify({ prompt, analysis_mode: analysisMode }),

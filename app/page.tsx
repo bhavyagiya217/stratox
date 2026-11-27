@@ -7,6 +7,8 @@ import {
   Building, CreditCard, Download, Copy, Check
 } from "lucide-react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function StratoxCommandCenter() {
   const [prompt, setPrompt] = useState("");
   const [analysisMode, setAnalysisMode] = useState("design"); 
@@ -22,7 +24,7 @@ export default function StratoxCommandCenter() {
     setLoading(true);
     setResult(null); 
     try {
-        const res = await fetch("http://127.0.0.1:8000/analyze-infrastructure", {
+        const res = await fetch(`${API_BASE_URL}/analyze-infrastructure`, {
           method: "POST", 
           headers: { "Content-Type": "application/json" }, 
           body: JSON.stringify({ prompt, analysis_mode: analysisMode }),
@@ -56,7 +58,6 @@ export default function StratoxCommandCenter() {
     if (!result) return;
     const dateStr = new Date().toISOString().split('T')[0];
     const reportContent = `# Stratox FinOps Intelligence Report\n\n**Analysis Mode:** ${analysisMode.toUpperCase()}\n**Timestamp:** ${new Date().toLocaleString()}\n**Routing Node:** ${result.pillar_addressed}\n\n### FinOps Telemetry\n- **Initial Projected Cost:** $${result.initial_cost.toFixed(2)}/mo\n- **Optimized Cost:** $${result.optimized_cost.toFixed(2)}/mo\n- **Total Savings Realized:** $${result.savings.toFixed(2)}/mo\n\n---\n\n## Architecture & Remediation Details\n\n${result.analysis_output}`;
-    
     const blob = new Blob([reportContent], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -71,7 +72,6 @@ export default function StratoxCommandCenter() {
   return (
     <div className="min-h-screen bg-[#0e0e11] text-[#a1a1aa] font-sans selection:bg-amber-500/20">
       
-      {/* HIGH-END TOP NAV */}
       <header className="h-16 border-b border-[#27272a] bg-[#0e0e11]/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="bg-[#18181b] p-1.5 rounded-md border border-[#27272a] shadow-sm">
@@ -83,8 +83,6 @@ export default function StratoxCommandCenter() {
             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div> FinOps Engine Live
           </span>
         </div>
-        
-        {/* Workspace Profile */}
         <div className="flex items-center gap-3 cursor-pointer hover:bg-[#18181b] px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-[#27272a]">
           <div className="text-right hidden md:block">
             <p className="text-[13px] font-medium text-[#ededed]">Production Org</p>
@@ -96,16 +94,12 @@ export default function StratoxCommandCenter() {
         </div>
       </header>
 
-      {/* WORKSPACE */}
       <main className="max-w-4xl mx-auto p-6 md:p-10 space-y-8">
-        
-        {/* Header & Minimal Stats */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-8 border-b border-[#27272a]">
           <div>
             <h1 className="text-3xl font-semibold text-[#ededed] tracking-tight mb-2">Infrastructure Intelligence</h1>
             <p className="text-[15px] text-[#71717a]">Scan IaC, analyze cost leaks, compare cloud pricing, and enforce security.</p>
           </div>
-          
           <div className="flex items-center gap-6 bg-[#18181b] px-6 py-4 rounded-xl border border-[#27272a] shadow-sm shrink-0 overflow-x-auto">
             <div>
               <p className="text-[11px] text-[#71717a] uppercase tracking-widest font-semibold mb-1.5">Monitored Spend</p>
@@ -127,16 +121,13 @@ export default function StratoxCommandCenter() {
               <p className="text-[11px] text-[#71717a] uppercase tracking-widest font-semibold mb-1.5">Routing Node</p>
               <p className="text-[14px] font-medium text-[#ededed] flex items-center gap-2">
                 <Activity className="w-3.5 h-3.5 text-amber-500"/>
-                {result ? (result.status.includes("Failover") ? "HA Pool (3.5)" : "Premium (3.8)") : "Standby"}
+                {result ? (result.status.includes("Failover") ? "HA Pool (1.5)" : "Premium (2.0)") : "Standby"}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Action Area */}
         <div className="border border-[#27272a] bg-[#18181b] rounded-xl shadow-sm overflow-hidden">
-          
-          {/* Tabs */}
           <div className="flex border-b border-[#27272a] bg-[#0e0e11]/50 px-2 pt-2 gap-2 overflow-x-auto custom-scrollbar">
             <button onClick={() => setAnalysisMode("design")} className={`flex shrink-0 items-center gap-2 px-4 py-2.5 text-[13px] font-medium transition-all rounded-t-lg ${analysisMode === "design" ? "text-[#ededed] bg-[#18181b] border-t border-l border-r border-[#27272a]" : "text-[#71717a] hover:text-[#a1a1aa] border-t border-l border-r border-transparent"}`}>
               <Layers className="w-4 h-4"/> Architecture
@@ -155,7 +146,6 @@ export default function StratoxCommandCenter() {
             </button>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="p-5">
             <textarea 
                 value={prompt} 
@@ -163,7 +153,6 @@ export default function StratoxCommandCenter() {
                 className="w-full h-36 bg-[#0e0e11] border border-[#27272a] rounded-lg px-4 py-3 text-[#ededed] focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 focus:outline-none resize-none font-mono text-[13px] placeholder:text-[#52525b] leading-relaxed transition-all shadow-inner" 
                 placeholder={getPlaceholder()} 
             />
-            
             <div className="flex justify-end mt-5">
               <button 
                   type="submit" 
@@ -180,23 +169,18 @@ export default function StratoxCommandCenter() {
           </form>
         </div>
 
-        {/* Output Area */}
         {result && !loading && (
           <div className="border border-[#27272a] bg-[#18181b] rounded-xl overflow-hidden shadow-sm animate-in fade-in duration-500">
-            {/* Output Header with BEFORE -> AFTER -> SAVED */}
             <div className="bg-[#0e0e11]/50 px-5 py-3.5 border-b border-[#27272a] flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
                 <span className="text-[13px] font-semibold text-[#ededed] tracking-wide truncate">Analysis Complete</span>
               </div>
-              
               <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                {/* Before & After Visualizer */}
                 <div className="flex items-center bg-[#0e0e11] border border-[#27272a] rounded-lg p-1 mr-2">
                   <span className="text-[12px] font-mono text-[#71717a] px-2" title="Initial Projected Cost">
                     Before: ${result.initial_cost.toFixed(2)}
                   </span>
-                  
                   {result.savings > 0 && (
                     <>
                       <ArrowRight className="w-3 h-3 text-[#52525b]" />
@@ -210,18 +194,15 @@ export default function StratoxCommandCenter() {
                     </>
                   )}
                 </div>
-
                 <button onClick={handleCopy} className="p-1.5 text-[#71717a] hover:text-[#ededed] bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] rounded-md transition-colors flex items-center gap-1.5">
                   {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                   {copied && <span className="text-[11px] font-medium text-emerald-500">Copied!</span>}
                 </button>
-                
                 <button onClick={handleDownload} className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-[#ededed] bg-[#27272a] hover:bg-[#3f3f46] rounded-md transition-colors">
                   <Download className="w-3.5 h-3.5" /> Export
                 </button>
               </div>
             </div>
-            
             <div className="p-6 md:p-8 overflow-x-auto">
               <pre className="font-sans text-[14.5px] text-[#d4d4d8] leading-relaxed whitespace-pre-wrap">
                 {result.analysis_output}
@@ -229,7 +210,6 @@ export default function StratoxCommandCenter() {
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
